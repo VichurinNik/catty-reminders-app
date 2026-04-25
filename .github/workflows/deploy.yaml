@@ -1,4 +1,4 @@
-name: CD - Deploy to Server (Docker)
+name: Deploy
 
 on:
   release:
@@ -8,43 +8,29 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Prepare lowercase repo name
+        run: echo "REPO_LOWER=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: course.prafdin.ru
-          port: 3106
           username: vboxuser
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 3106
           script: |
-            set -e
-            IMAGE_NAME="ghcr.io/vichurinnik/catty-reminders-app:latest"
-            CONTAINER_NAME="catty-app"
-
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-            docker stop $CONTAINER_NAME || true
-            docker rm $CONTAINER_NAME || true
-
-            docker pull $IMAGE_NAME
-
-            docker run -d --name $CONTAINER_NAME -p 8181:8181 --restart unless-stopped \
-              -e DEPLOY_REF="${{ github.sha }}" \
-              $IMAGE_NAME
-
-            sleep 3
-            if curl -s --fail http://localhost:8181/login; then
-              echo "Docker container started successfully"
-            else
-              echo "Application failed to start"
-              docker logs $CONTAINER_NAME
-              exit 1
-            fi
-
-      - name: Verify external access
-        run: |
-          sleep 5
-          curl -s --fail "http://app.vichurin.course.prafdin.ru/login" || exit 1
-          echo "Application is accessible at http://app.vichurin.course.prafdin.ru"
+            docker pull ghcr.io/${{ env.REPO_LOWER }}:latest
+            docker stop catty-app || true
+            docker rm catty-app || true
+            docker run -d --name catty-app -p 8181:8181 --restart always -e DEPLOY_REF=${{ github.sha }} ghcr.io/${{ env.REPO_LOWER }}:latest
+            docker image prune -f
