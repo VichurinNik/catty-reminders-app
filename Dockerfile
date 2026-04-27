@@ -1,27 +1,20 @@
 FROM python:3.14-slim
 
-# Аргумент для передачи из GitHub Actions
 ARG DEPLOY_REF=unknown
+ENV DEPLOY_REF=${DEPLOY_REF}
 
-WORKDIR /catty-reminders-app
+WORKDIR /app
 
-COPY requirements.txt .
+# Копируем всё
+COPY . .
 
+# Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app/ ./app/
-COPY static/ ./static/
-COPY templates/ ./templates/
-COPY config.json .
-
-# Создаём скрипт, который заменяет {{ deploy_ref }} на реальный DEPLOY_REF
-RUN echo '#!/bin/bash\n\
-if [ "$DEPLOY_REF" != "unknown" ] && [ "$DEPLOY_REF" != "" ]; then\n\
-    echo "Replacing {{ deploy_ref }} with $DEPLOY_REF in HTML files"\n\
-    find /catty-reminders-app/templates -name "*.html" -exec sed -i "s/{{ deploy_ref }}/$DEPLOY_REF/g" {} \;\n\
-fi\n\
-exec uvicorn app.main:app --host 0.0.0.0 --port 8181' > /start.sh && chmod +x /start.sh
+# Устанавливаем uvicorn если его нет в requirements
+RUN pip install --no-cache-dir uvicorn
 
 EXPOSE 8181
 
-CMD ["/start.sh"]
+# Команда для поиска и запуска приложения
+CMD ["sh", "-c", "python -c \"import app.main; import uvicorn; uvicorn.run(app.main.app, host='0.0.0.0', port=8181)\" || python -m uvicorn app.main:app --host 0.0.0.0 --port 8181"]
