@@ -50,4 +50,5 @@ jobs:
               --name catty-app \
               -p 8181:8181 \
               --restart always \
+              -e DEPLOY_REF="${{ github.sha }}" \
               ghcr.io/${{ env.REPO_LOWER }}:latest
