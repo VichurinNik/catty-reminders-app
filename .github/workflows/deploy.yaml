@@ -28,7 +28,7 @@ jobs:
               OWNER=$(echo "${{ github.repository_owner }}" | tr "[:upper:]" "[:lower:]")
               
               export DEPLOY_REF=${{ github.sha }}
-              export IMAGE=ghcr.io/$OWNER/catty-reminders-app:${{ github.sha }}
+              export IMAGE=ghcr.io/$OWNER/catty-reminders-app:lab4
               
               export APP_CONTAINER_NAME=catty-app
               export MARIADB_ROOT_PASSWORD=mypass
