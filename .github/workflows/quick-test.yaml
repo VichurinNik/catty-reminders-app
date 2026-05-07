@@ -1,0 +1,19 @@
+name: Quick Test
+
+on:
+  workflow_dispatch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: course.prafdin.ru
+          username: vboxuser
+          port: 3106
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker ps -a
+            docker logs catty-app --tail 30 2>/dev/null || echo "No catty-app"
