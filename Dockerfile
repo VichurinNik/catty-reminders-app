@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12
 
 ARG DEPLOY_REF=unknown
 ENV DEPLOY_REF=${DEPLOY_REF}
