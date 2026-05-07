@@ -1,0 +1,65 @@
+name: Debug Server
+
+on:
+  workflow_dispatch
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: course.prafdin.ru
+          username: vboxuser
+          port: 3106
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            echo "=== Check if directory exists ==="
+            ls -la /home/vboxuser/lab4/ 2>/dev/null || echo "Directory /home/vboxuser/lab4 not found"
+            
+            echo "=== Create directory and clone repo ==="
+            mkdir -p /home/vboxuser/lab4
+            cd /home/vboxuser/lab4
+            rm -rf catty-reminders-app
+            git clone https://github.com/vichurinnik/catty-reminders-app.git
+            cd catty-reminders-app
+            git checkout lab4
+            
+            echo "=== Create .env file ==="
+            cat > .env << 'EOF'
+            MARIADB_ROOT_PASSWORD=mypass
+            MARIADB_DATABASE=catty_db
+            MARIADB_USER=catty_user
+            MARIADB_PASSWORD=MyStrongUserPass456!
+            HOST_DB_PORT=3306
+            CONTEINER_DB_PORT=3306
+            HOST_APP_PORT=8181
+            CONTEINER_APP_PORT=8181
+            APP_CONTAINER_NAME=catty-app
+            IMAGE=ghcr.io/vichurinnik/catty-reminders-app:lab4
+            DEPLOY_REF=manual-test
+            EOF
+            
+            echo "=== Pull latest image ==="
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull ghcr.io/vichurinnik/catty-reminders-app:lab4
+            
+            echo "=== Stop old containers ==="
+            docker compose down -v 2>/dev/null || true
+            
+            echo "=== Start new stack ==="
+            docker compose up -d
+            
+            echo "=== Wait for app to start ==="
+            sleep 10
+            
+            echo "=== Check containers ==="
+            docker ps -a
+            
+            echo "=== Check app logs ==="
+            docker compose logs catty-app --tail 30
+            
+            echo "=== Test locally ==="
+            curl -s http://localhost:8181/login | head -20 || echo "App not responding"
