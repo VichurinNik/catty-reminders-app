@@ -2,9 +2,9 @@
   "db_config": {
     "host": "db",
     "port": 3306,
-    "user": "root",
-    "password": "mypass",
-    "database": "catty_reminders"
+    "user": "catty_user",
+    "password": "MyStrongUserPass456!",
+    "database": "catty_db"
   },
   "secret_key": "Cats are awesome!",
   "users": {
