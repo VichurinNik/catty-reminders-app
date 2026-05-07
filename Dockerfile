@@ -1,9 +1,6 @@
-FROM python:3.12
+FROM python:3.12-slim
 
-ARG DEPLOY_REF=unknown
-ENV DEPLOY_REF=${DEPLOY_REF}
-
-WORKDIR /catty-reminders-app
+WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
