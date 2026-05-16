@@ -1,7 +1,8 @@
+<!DOCTYPE html>
 <html>
 <head>
-    <title>Login | Catty reminders app</title>
     <meta name="deployref" content="{{ deploy_ref }}">
+    <title>Login | Catty reminders app</title>
     <link rel="stylesheet" type="text/css" href="/static/css/shared.css">
     <link rel="stylesheet" type="text/css" href="/static/css/login.css">
 </head>
@@ -25,19 +26,6 @@
                 <div>
                     <button type="submit" data-testid="login-button">Login</button>
                 </div>
-                {% if invalid %}
-                <div class="invalid-login-warning">
-                    <p>Invalid login! Please retry.</p>
-                </div>
-                {% elif logged_out %}
-                <div class="invalid-login-warning">
-                    <p>Successfully logged out.</p>
-                </div>
-                {% elif unauthorized %}
-                <div class="invalid-login-warning">
-                    <p>Please login first.</p>
-                </div>
-                {% endif %}
             </form>
         </div>
     </div>

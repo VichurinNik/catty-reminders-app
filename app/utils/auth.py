@@ -1,9 +1,10 @@
 import jwt
 import secrets
-from fastapi import Cookie, Depends, HTTPException
+from fastapi import Cookie, Depends
 from typing import Optional
-from app import db_config, users, secret_key
-from app.utils.mysql_storage import MySQLStorage
+from app import db_path, users, secret_key
+from app.utils.exceptions import UnauthorizedException, UnauthorizedPageException
+from app.utils.storage import ReminderStorage
 
 def serialize_token(username: str) -> str:
     return jwt.encode({"username": username}, secret_key, algorithm="HS256")
@@ -24,12 +25,20 @@ def get_auth_cookie(auth_token: Optional[str] = Cookie(None, alias="auth-token")
 def get_current_username(auth_token: Optional[str] = Cookie(None, alias="auth-token")):
     return deserialize_token(auth_token)
 
-def get_storage_for_api(username: str = Depends(get_current_username)):
-    if username is None:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    return MySQLStorage(owner=username, db_config=db_config)
+def get_username_for_api(auth_token: Optional[str] = Cookie(None, alias="auth-token")):
+    username = deserialize_token(auth_token)
+    if not username:
+        raise UnauthorizedException()
+    return username
 
-def get_storage_for_page(username: str = Depends(get_current_username)):
-    if username is None:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    return MySQLStorage(owner=username, db_config=db_config)
+def get_username_for_page(auth_token: Optional[str] = Cookie(None, alias="auth-token")):
+    username = deserialize_token(auth_token)
+    if not username:
+        raise UnauthorizedPageException()
+    return username
+
+def get_storage_for_api(username: str = Depends(get_username_for_api)) -> ReminderStorage:
+    return ReminderStorage(owner=username, db_path=db_path)
+
+def get_storage_for_page(username: str = Depends(get_username_for_page)) -> ReminderStorage:
+    return ReminderStorage(owner=username, db_path=db_path)
