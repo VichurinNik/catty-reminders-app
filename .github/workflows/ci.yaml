@@ -23,7 +23,8 @@ jobs:
         env:
           MARIADB_ROOT_PASSWORD: mypass
           MARIADB_DATABASE: catty_reminders
-        ports: [ 3306:3306 ]
+        ports:
+          - 3306:3306
 
     steps:
       - uses: actions/checkout@v4
