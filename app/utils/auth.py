@@ -11,6 +11,9 @@ from typing import Optional
 class AuthCookie(BaseModel):
     username: str
 
+def get_login_form_creds(username: str = Form(...), password: str = Form(...)):
+    return username, password
+
 def verify_password(username: str, password: str) -> bool:
     return users.get(username) == password
 
