@@ -1,18 +1,22 @@
 import jwt
 import secrets
-from app import db_config, users, secret_key
-from app.utils.exceptions import UnauthorizedException, UnauthorizedPageException
-from app.utils.mysql_storage import MySQLStorage
-from fastapi import Cookie, Depends, Form
+from fastapi import Cookie, Depends, Form, HTTPException
 from fastapi.security import HTTPBasic
 from pydantic import BaseModel
 from typing import Optional
+from app import db_config, users, secret_key
+from app.utils.exceptions import UnauthorizedException, UnauthorizedPageException
+from app.utils.mysql_storage import MySQLStorage
 
 class AuthCookie(BaseModel):
     username: str
 
-def get_login_form_creds(username: str = Form(...), password: str = Form(...)):
-    return username, password
+class LoginCreds(BaseModel):
+    username: str
+    password: str
+
+def get_login_form_creds(creds: LoginCreds = Depends()):
+    return creds
 
 def verify_password(username: str, password: str) -> bool:
     return users.get(username) == password
