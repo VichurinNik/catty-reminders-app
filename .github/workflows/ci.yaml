@@ -57,7 +57,7 @@ jobs:
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}
-        run: pytest --junitxml=test_result.xml
+        run: pytest --junitxml=test_result.xml --junit-prefix=test
         continue-on-error: true
       - name: Show app logs after tests
         if: always()
