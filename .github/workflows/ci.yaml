@@ -45,38 +45,13 @@ jobs:
         run: |
           pip install -r requirements.txt pytest-playwright
           playwright install --with-deps chromium
-      - name: Check app import
-        run: |
-          python -c "from app.main import app; print('App imported successfully')"
       - name: Patch config for CI
         run: |
           sed -i 's/"host": "db"/"host": "127.0.0.1"/g' config.json
-      - name: Initialize database
-        run: |
-          mysql -h 127.0.0.1 -u root -pmypass -e "CREATE DATABASE IF NOT EXISTS catty_reminders;"
-          mysql -h 127.0.0.1 -u root -pmypass catty_reminders << 'EOF'
-          CREATE TABLE IF NOT EXISTS reminder_lists (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            owner VARCHAR(255) NOT NULL,
-            name VARCHAR(255) NOT NULL
-          );
-          CREATE TABLE IF NOT EXISTS reminder_items (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            list_id INT NOT NULL,
-            description TEXT NOT NULL,
-            completed BOOLEAN DEFAULT FALSE,
-            FOREIGN KEY (list_id) REFERENCES reminder_lists(id) ON DELETE CASCADE
-          );
-          CREATE TABLE IF NOT EXISTS selected_lists (
-            owner VARCHAR(255) PRIMARY KEY,
-            list_id INT,
-            FOREIGN KEY (list_id) REFERENCES reminder_lists(id) ON DELETE SET NULL
-          );
-          EOF
       - name: Start app
         run: |
-          uvicorn app.main:app --host 127.0.0.1 --port 8181 &
-          sleep 15
+          nohup uvicorn app.main:app --host 127.0.0.1 --port 8181 &
+          sleep 10
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}
