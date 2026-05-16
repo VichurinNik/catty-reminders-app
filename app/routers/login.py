@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, Form, Request, Response
 from fastapi.responses import RedirectResponse
+from app import templates, users, secret_key
+from app.utils.auth import serialize_token
 import jwt
-from app import secret_key, users
-from app import templates
 
 router = APIRouter()
 
@@ -13,7 +13,7 @@ async def get_login(request: Request):
 @router.post("/login")
 async def post_login(response: Response, username: str = Form(...), password: str = Form(...)):
     if users.get(username) == password:
-        token = jwt.encode({"username": username}, secret_key, algorithm="HS256")
+        token = serialize_token(username)
         response.set_cookie(key="auth-token", value=token, httponly=True)
         return RedirectResponse(url="/reminders", status_code=303)
     else:
