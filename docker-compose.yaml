@@ -1,38 +1,36 @@
 services:
   db:
-    image: mariadb:11
+    image: mariadb:10.11
     container_name: catty-db
-    restart: always
+    restart: unless-stopped
     environment:
-      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
-      - MARIADB_DATABASE=${MARIADB_DATABASE}
-      - MARIADB_USER=${MARIADB_USER}
-      - MARIADB_PASSWORD=${MARIADB_PASSWORD}
-    ports:
-      - "${HOST_DB_PORT}:${CONTEINER_DB_PORT}"
+      MYSQL_ROOT_PASSWORD: mypass
+      MYSQL_DATABASE: catty_reminders
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     volumes:
-      - db_data:/var/lib/mysql
-    networks:
-      - catty-network
+      - catty-db-data:/var/lib/mysql
 
-  catty-app:
-    image: ${IMAGE}
-    container_name: ${APP_CONTAINER_NAME}
-    restart: always
-    environment:
-      - DEPLOY_REF=${DEPLOY_REF}
-    ports:
-      - "${HOST_APP_PORT}:${CONTEINER_APP_PORT}"
-    volumes:
-      - ./config.json:/catty-reminders-app/config.json:ro
+  app:
+    image: ${IMAGE:-catty-reminders-app:local}
+    container_name: catty-app
+    restart: unless-stopped
     depends_on:
-      - db
-    networks:
-      - catty-network
-
-networks:
-  catty-network:
-    driver: bridge
+      db:
+        condition: service_healthy
+    ports:
+      - "8181:8181"
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: root
+      DB_PASSWORD: mypass
+      DB_NAME: catty_reminders
+      DEPLOY_REF: ${DEPLOY_REF}
 
 volumes:
-  db_data:
+  catty-db-data:
