@@ -45,13 +45,19 @@ jobs:
         run: |
           pip install -r requirements.txt pytest-playwright
           playwright install --with-deps chromium
+      - name: Check app import
+        run: |
+          python -c "from app.main import app; print('App imported successfully')"
       - name: Patch config for CI
         run: |
           sed -i 's/"host": "db"/"host": "127.0.0.1"/g' config.json
       - name: Start app
         run: |
-          nohup uvicorn app.main:app --host 127.0.0.1 --port 8181 &
+          uvicorn app.main:app --host 127.0.0.1 --port 8181 &
           sleep 15
+          echo "=== Checking if app is running ==="
+          curl -v http://127.0.0.1:8181/login 2>&1 || echo "App failed to start"
+          ps aux | grep uvicorn
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}
