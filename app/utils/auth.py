@@ -17,27 +17,30 @@ def verify_password(username: str, password: str) -> bool:
 def serialize_token(username: str) -> str:
     return jwt.encode({"username": username}, secret_key, algorithm="HS256")
 
-def deserialize_token(token: str) -> Optional[AuthCookie]:
+def deserialize_token(token: str) -> Optional[str]:
     try:
         payload = jwt.decode(token, secret_key, algorithms=["HS256"])
-        return AuthCookie(username=payload["username"])
+        return payload.get("username")
     except jwt.InvalidTokenError:
         return None
 
 def get_auth_cookie(auth_token: Optional[str] = Cookie(None, alias="auth-token")):
-    return deserialize_token(auth_token)
+    username = deserialize_token(auth_token)
+    if username:
+        return AuthCookie(username=username)
+    return None
 
 def get_username_for_api(auth_token: Optional[str] = Cookie(None, alias="auth-token")):
-    cookie = deserialize_token(auth_token)
-    if not cookie:
+    username = deserialize_token(auth_token)
+    if not username:
         raise UnauthorizedException()
-    return cookie.username
+    return username
 
 def get_username_for_page(auth_token: Optional[str] = Cookie(None, alias="auth-token")):
-    cookie = deserialize_token(auth_token)
-    if not cookie:
+    username = deserialize_token(auth_token)
+    if not username:
         raise UnauthorizedPageException()
-    return cookie.username
+    return username
 
 def get_storage_for_api(username: str = Depends(get_username_for_api)) -> MySQLStorage:
     return MySQLStorage(owner=username, db_config=db_config)
