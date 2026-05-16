@@ -11,12 +11,6 @@ from app.utils.mysql_storage import MySQLStorage
 class AuthCookie(BaseModel):
     username: str
 
-class LoginCreds(BaseModel):
-    username: str
-    password: str
-
-def get_login_form_creds(creds: LoginCreds = Depends()):
-    return creds
 
 def verify_password(username: str, password: str) -> bool:
     return users.get(username) == password
