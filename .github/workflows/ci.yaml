@@ -50,18 +50,29 @@ jobs:
           sed -i 's/"host": "db"/"host": "127.0.0.1"/g' config.json
       - name: Start app
         run: |
-          nohup uvicorn app.main:app --host 127.0.0.1 --port 8181 &
+          uvicorn app.main:app --host 127.0.0.1 --port 8181 > app.log 2>&1 &
           sleep 10
+          echo "=== App startup logs ==="
+          cat app.log
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: pytest --junitxml=test_result.xml
+        continue-on-error: true
+      - name: Show app logs after tests
+        if: always()
+        run: |
+          echo "=== App logs after tests ==="
+          cat app.log
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test_result
           path: test_result.xml
+      - name: Fail if tests failed
+        if: failure()
+        run: exit 1
 
   build-and-push:
     needs: tests
